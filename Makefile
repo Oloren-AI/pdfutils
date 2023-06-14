@@ -1,9 +1,9 @@
 # Makefile for chemblextension project
 
 # Variables
-EXTENSION_NAME = "chemblextension"
+EXTENSION_NAME = "pdfutils"
 DOCKER_IMAGE = ${EXTENSION_NAME}:latest
-PORT = 8077
+PORT = 8074
 
 # Phony targets
 .PHONY: docker docker-build docker-run
@@ -22,4 +22,5 @@ docker-build:
 # Docker run target: runs Docker container
 docker-run:
 	@echo "Running Docker container $(DOCKER_IMAGE)"
+	@echo "Open http://localhost:$(PORT) to view the extension"
 	docker run -it -p $(PORT):80 -v $(pwd):/app $(DOCKER_IMAGE)
