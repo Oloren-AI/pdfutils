@@ -45,6 +45,26 @@ def pdfpageannotation2image(file = olo.File(), num = olo.Num(), annotation = olo
     return olo.OutputFile("page.jpg")
 
 @olo.register()
+def pdf2imagelist(file = olo.File()):
+    pdf = pdfium.PdfDocument(file)
+    page_outputs = []
+    for i in range(len(pdf)):
+        page = pdf[i]
+
+        bitmap = page.render(
+            scale=1,
+        )
+        pil_image = bitmap.to_pil()
+        pil_image.save(f"page{i}.jpg", "JPEG")
+        
+        file_json = olo.upload_file(f"page{i}.jpg")
+        print("Inputs ", i)
+        print(file_json[0])
+        
+        page_outputs.append(file_json[0])
+    return page_outputs
+
+@olo.register()
 def imageannotation2image(file = olo.File(), annotation = olo.Json()):
     image = PIL.Image.open(file)
     
