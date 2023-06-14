@@ -3,6 +3,7 @@ import sys
 import io
 import os
 
+import PIL
 import pypdfium2 as pdfium
 
 @olo.register()
@@ -40,6 +41,21 @@ def pdfpageannotation2image(file = olo.File(), num = olo.Num(), annotation = olo
     pil_image = pil_image.crop((x1, y1, x2, y2))
     
     pil_image.save("page.jpg", "JPEG")
+    
+    return olo.OutputFile("page.jpg")
+
+@olo.register()
+def imageannotation2image(file = olo.File(), annotation = olo.Json()):
+    image = PIL.Image.open(file)
+    
+    # crop
+    x1 = annotation["x1"]
+    x2 = annotation["x2"]
+    y1 = annotation["y1"]
+    y2 = annotation["y2"]
+    image = image.crop((x1, y1, x2, y2))
+    
+    image.save("page.jpg", "JPEG")
     
     return olo.OutputFile("page.jpg")
 
