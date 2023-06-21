@@ -10,7 +10,7 @@ RUN pip install -U pypdfium2
 RUN pip install Pillow
 RUN pip install "python-socketio[client]"
 
-RUN pip install oloren==0.0.28a
+RUN pip install oloren==0.0.28a0
 
 # Copying application code to the Docker image
 COPY app.py /app.py
