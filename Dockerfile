@@ -2,7 +2,7 @@
 FROM python:3.10-slim-bullseye
 
 # Installing necessary packages
-RUN pip install oloren
+RUN pip install oloren==0.0.27
 RUN pip install pandas numpy
 RUN pip install PyPDF2
 
