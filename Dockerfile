@@ -9,8 +9,8 @@ RUN pip install PyPDF2
 RUN pip install -U pypdfium2
 RUN pip install Pillow
 RUN pip install "python-socketio[client]"
-
-RUN pip install oloren==0.0.28b0
+RUN pip install pypdf
+RUN pip install oloren==0.0.53
 
 # Copying application code to the Docker image
 COPY app.py /app.py

@@ -7,6 +7,14 @@ import PIL
 import pypdfium2 as pdfium
 
 @olo.register()
+def download_pdf(url = olo.String()):
+    import requests
+    r = requests.get(url)
+    with open("file.pdf", "wb") as file:
+        file.write(r.content)
+    return olo.OutputFile("file.pdf")
+
+@olo.register()
 def get_num_pages(file = olo.File()):
     pdf = pdfium.PdfDocument(file)
     print("PDF", len(pdf))
@@ -128,6 +136,41 @@ def pdf_first_text(file = olo.File()):
         reader = PdfReader(file)
         first_page = reader.pages[0]
         return first_page.extract_text()
+
+import json
+from pypdf import PdfReader
+import random
+
+@olo.register()
+def parse_pdf(file = olo.File(), log_message=print):
+    def img2file(img):
+        file_name = f"{img.name}_{random.randint(0, 1000000)}.jpg"
+        
+        with open(file_name, "wb") as file:
+            file.write(img.data)
+            
+        fileinfo = olo.upload_file(file_name, dispatcher_url=log_message.dispatcher_url)
+        
+        fileinfo["name"] = img.name
+        
+        return fileinfo
+        
+        
     
+    with open(file, "rb") as file:
+        reader = PdfReader(file)
+        
+        # page in pdf
+        pdf_dict = []
+        for i, page in enumerate(reader.pages):
+            log_message(f"Parsing page {i}")
+            pdf_dict.append({
+                "page": i,
+                "text": page.extract_text(),
+                "images": [img2file(img) for img in page.images]
+            })
+    
+    return pdf_dict
+
 if __name__ == "__main__":
     olo.run("pdfutils", port=80)
