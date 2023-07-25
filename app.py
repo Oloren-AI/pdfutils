@@ -174,12 +174,12 @@ def parse_pdf(file = olo.File(), log_message=print):
 
 @olo.register()
 def keep_pages(file = olo.File() , pages = olo.Json()):
-    from PyPDF2 import PdfFileWriter, PdfFileReader
-    output = PdfFileWriter()
-    input_pdf = PdfFileReader(file)
+    from PyPDF2 import PdfWriter, PdfReader
+    output = PdfWriter()
+    input_pdf = PdfReader(file)
 
     for page_number in pages:
-        output.addPage(input_pdf.getPage(page_number))
+        output.add_page(input_pdf.pages[page_number])
 
     new_pdf_file = "new_pdf_file.pdf"
     with open(new_pdf_file, "wb") as outputStream:
