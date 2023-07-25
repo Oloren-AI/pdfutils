@@ -40,16 +40,16 @@ def pdfpageannotation2image(file = olo.File(), num = olo.Num(), annotation = olo
         scale=1,
     )
     pil_image = bitmap.to_pil()
-    
+
     # crop
     x1 = annotation["x1"]
     x2 = annotation["x2"]
     y1 = annotation["y1"]
     y2 = annotation["y2"]
     pil_image = pil_image.crop((x1, y1, x2, y2))
-    
+
     pil_image.save("page.jpg", "JPEG")
-    
+
     return olo.OutputFile("page.jpg")
 
 @olo.register()
@@ -64,27 +64,27 @@ def pdf2imagelist(file = olo.File()):
         )
         pil_image = bitmap.to_pil()
         pil_image.save(f"page{i}.jpg", "JPEG")
-        
+
         file_json = olo.upload_file(f"page{i}.jpg")
         print("Inputs ", i)
         print(file_json[0])
-        
+
         page_outputs.append(file_json[0])
     return page_outputs
 
 @olo.register()
 def imageannotation2image(file = olo.File(), annotation = olo.Json()):
     image = PIL.Image.open(file)
-    
+
     # crop
     x1 = annotation["x1"]
     x2 = annotation["x2"]
     y1 = annotation["y1"]
     y2 = annotation["y2"]
     image = image.crop((x1, y1, x2, y2))
-    
+
     image.save("page.jpg", "JPEG")
-    
+
     return olo.OutputFile("page.jpg")
 
 @olo.register()
@@ -99,11 +99,11 @@ def pdfimageiter(file = olo.File(), func = olo.Func()):
         )
         pil_image = bitmap.to_pil()
         pil_image.save(f"page{i}.jpg", "JPEG")
-        
+
         file_json = olo.upload_file(f"page{i}.jpg")
         print("Inputs ", i)
         print(file_json[0])
-        
+
         page_output = func(file_json[0])
         page_outputs.append(page_output)
     return page_outputs
@@ -114,7 +114,7 @@ def pdf2txt(file = olo.File()):
         from PyPDF2 import PdfReader
         reader = PdfReader(file)
         return "\n".join([page.extract_text() for i, page in enumerate(reader.pages)])
-    
+
 @olo.register()
 def pdfpage2txt(file = olo.File(), num = olo.Num()):
     with open(file, "rb") as file:
@@ -145,21 +145,21 @@ import random
 def parse_pdf(file = olo.File(), log_message=print):
     def img2file(img):
         file_name = f"{img.name}_{random.randint(0, 1000000)}.jpg"
-        
+
         with open(file_name, "wb") as file:
             file.write(img.data)
-            
+
         fileinfo = olo.upload_file(file_name, dispatcher_url=log_message.dispatcher_url)
-        
+
         fileinfo["name"] = img.name
-        
+
         return fileinfo
-        
-        
-    
+
+
+
     with open(file, "rb") as file:
         reader = PdfReader(file)
-        
+
         # page in pdf
         pdf_dict = []
         for i, page in enumerate(reader.pages):
@@ -169,8 +169,23 @@ def parse_pdf(file = olo.File(), log_message=print):
                 "text": page.extract_text(),
                 "images": [img2file(img) for img in page.images]
             })
-    
+
     return pdf_dict
+
+@olo.register()
+def keep_pages(file = olo.File() , pages = olo.Json()):
+    from PyPDF2 import PdfFileWriter, PdfFileReader
+    output = PdfFileWriter()
+    input_pdf = PdfFileReader(file)
+
+    for page_number in pages:
+        output.addPage(input_pdf.getPage(page_number))
+
+    new_pdf_file = "new_pdf_file.pdf"
+    with open(new_pdf_file, "wb") as outputStream:
+        output.write(outputStream)
+
+    return olo.OutputFile(new_pdf_file)
 
 if __name__ == "__main__":
     olo.run("pdfutils", port=80)
