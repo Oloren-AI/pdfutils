@@ -155,7 +155,6 @@ def parse_pdf(file = olo.File(), log_message=print):
         
         return fileinfo
         
-        
     
     with open(file, "rb") as file:
         reader = PdfReader(file)
@@ -171,6 +170,56 @@ def parse_pdf(file = olo.File(), log_message=print):
             })
     
     return pdf_dict
+
+import os
+import json
+import shutil
+import zipfile
+
+@olo.register()
+def parse_pdf_2(file = olo.File(), log_message=print):
+    def img2file(img, page_num, img_num):
+        img_dir = f"img/{page_num}"
+        os.makedirs(img_dir, exist_ok=True)
+        file_name = f"{img_dir}/{img_num}.jpg"
+
+        with open(file_name, "wb") as file:
+            file.write(img.data)
+            
+        return file_name
+
+    with open(file, "rb") as file:
+        reader = PdfReader(file)
+        
+        # page in pdf
+        pdf_dict = []
+        for i, page in enumerate(reader.pages):
+            for img in page.images:
+                print("img", img.name, img.indirect_reference, reader.get_object(img.indirect_reference))
+            log_message(f"Parsing page {i}")
+            pdf_dict.append({
+                "page": i,
+                "text": page.extract_text(),
+                "images": [img2file(img, i, img_num) for img_num, img in enumerate(page.images)]
+            })
+    
+    # save pdf_dict to main.json
+    with open('main.json', 'w') as json_file:
+        json.dump(pdf_dict, json_file)
+
+    # creating a zip file
+    zipf = zipfile.ZipFile('PdfParsed.zip', 'w', zipfile.ZIP_DEFLATED)
+    for root, dirs, files in os.walk("img"):
+        for file in files:
+            zipf.write(os.path.join(root, file))
+    zipf.write('main.json')
+    zipf.close()
+
+    # cleanup
+    shutil.rmtree('img')
+    os.remove('main.json')
+    return "OK"
+    return olo.OutputFile("PdfParsed.zip")
 
 if __name__ == "__main__":
     olo.run("pdfutils", port=80)
