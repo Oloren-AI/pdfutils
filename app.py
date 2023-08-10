@@ -53,26 +53,6 @@ def pdfpageannotation2image(file = olo.File(), num = olo.Num(), annotation = olo
     return olo.OutputFile("page.jpg")
 
 @olo.register()
-def pdf2imagelist(file = olo.File()):
-    pdf = pdfium.PdfDocument(file)
-    page_outputs = []
-    for i in range(len(pdf)):
-        page = pdf[i]
-
-        bitmap = page.render(
-            scale=1,
-        )
-        pil_image = bitmap.to_pil()
-        pil_image.save(f"page{i}.jpg", "JPEG")
-        
-        file_json = olo.upload_file(f"page{i}.jpg")
-        print("Inputs ", i)
-        print(file_json[0])
-        
-        page_outputs.append(file_json[0])
-    return page_outputs
-
-@olo.register()
 def imageannotation2image(file = olo.File(), annotation = olo.Json()):
     image = PIL.Image.open(file)
     
@@ -171,55 +151,21 @@ def parse_pdf(file = olo.File(), log_message=print):
     
     return pdf_dict
 
-import os
-import json
-import shutil
-import zipfile
-
 @olo.register()
-def parse_pdf_2(file = olo.File(), log_message=print):
-    def img2file(img, page_num, img_num):
-        img_dir = f"img/{page_num}"
-        os.makedirs(img_dir, exist_ok=True)
-        file_name = f"{img_dir}/{img_num}.jpg"
-
-        with open(file_name, "wb") as file:
-            file.write(img.data)
-            
-        return file_name
-
-    with open(file, "rb") as file:
-        reader = PdfReader(file)
+def pdf2imagelist(pdf_file = olo.File(), log_message=print):
+    pdf = pdfium.PdfDocument(pdf_file)
+    outputs = []
+    for num in range(len(pdf)):
+        page = pdf[num]
+        bitmap = page.render(
+            scale=1,
+        )
+        pil_image = bitmap.to_pil()
+        pil_image.save(f"page{num}.jpg", "JPEG")
         
-        # page in pdf
-        pdf_dict = []
-        for i, page in enumerate(reader.pages):
-            for img in page.images:
-                print("img", img.name, img.indirect_reference, reader.get_object(img.indirect_reference))
-            log_message(f"Parsing page {i}")
-            pdf_dict.append({
-                "page": i,
-                "text": page.extract_text(),
-                "images": [img2file(img, i, img_num) for img_num, img in enumerate(page.images)]
-            })
-    
-    # save pdf_dict to main.json
-    with open('main.json', 'w') as json_file:
-        json.dump(pdf_dict, json_file)
-
-    # creating a zip file
-    zipf = zipfile.ZipFile('PdfParsed.zip', 'w', zipfile.ZIP_DEFLATED)
-    for root, dirs, files in os.walk("img"):
-        for file in files:
-            zipf.write(os.path.join(root, file))
-    zipf.write('main.json')
-    zipf.close()
-
-    # cleanup
-    shutil.rmtree('img')
-    os.remove('main.json')
-    return "OK"
-    return olo.OutputFile("PdfParsed.zip")
+        fileInfo = olo.upload_file(f"page{num}.jpg", dispatcher_url=log_message.dispatcher_url, token=log_message.token)
+        outputs.append(fileInfo)
+    return outputs
 
 if __name__ == "__main__":
     olo.run("pdfutils", port=80)
